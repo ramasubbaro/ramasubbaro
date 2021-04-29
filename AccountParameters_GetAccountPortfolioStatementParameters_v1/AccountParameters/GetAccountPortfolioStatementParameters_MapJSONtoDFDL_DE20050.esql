@@ -1,0 +1,109 @@
+
+BROKER SCHEMA AccountParameters
+
+CREATE COMPUTE MODULE GetAccountPortfolioStatementParameters_MapJSONtoDFDL_DE20050
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		-- CALL CopyMessageHeaders();
+		-- CALL CopyEntireMessage();
+		SET OutputRoot.Properties = InputRoot.Properties;
+		SET OutputRoot.Properties.MessageType = '{}:WEBDE20050PARAMETERS';
+		SET OutputRoot.Properties.MessageFormat = 'BINARY';
+
+		SET Environment.Variables.TRConfig.Context.CICSUserId = InputLocalEnvironment.Variables.TRConfig.Context.CICSUserId;
+		SET Environment.Variables.TRConfig.Context.TransactionId = InputLocalEnvironment.Variables.TRConfig.Context.TransactionId;
+
+		CREATE LASTCHILD OF OutputRoot DOMAIN ('DFDL') NAME 'DFDL';
+		CREATE FIELD OutputRoot.DFDL.{'WEBDE20050PARAMETERS'};
+		DECLARE outputRef REFERENCE TO OutputRoot.DFDL.{'WEBDE20050PARAMETERS'};
+		CREATE FIELD outputRef.{'DE_COMM_AREA'};
+		DECLARE outputReqFields REFERENCE TO outputRef.{'DE_COMM_AREA'};
+		--TO handle use cases when user SubId is not sent.
+		DECLARE FirmNo, SubNo INTEGER;
+		SET FirmNo = CAST(Environment.Variables.FederateUserResponse.ent:FederateUserOutput.ent:FirmNo AS INTEGER);
+		SET SubNo = CAST(Environment.Variables.FederateUserResponse.ent:FederateUserOutput.ent:SubNo AS INTEGER);
+		SET outputReqFields.DE_FIRM = FirmNo;
+		SET outputReqFields.DE_SUB = SubNo;
+		CREATE FIELD outputReqFields.{'DE_REQ'};
+		DECLARE outputreq_DE_Req REFERENCE TO outputReqFields.{'DE_REQ'};
+		SET outputreq_DE_Req.DE_APPLICATION = 'HAPI';
+		SET outputreq_DE_Req.DE_FUNCTION = 'INQ';
+		CREATE FIELD outputReqFields.DE_USER_INFO;
+		SET outputReqFields.DE_USER_INFO.DE_SECURITY_LEVEL = CAST(Environment.Variables.FederateUserResponse.ent:FederateUserOutput.ent:Filter AS INTEGER );
+		SET outputReqFields.DE_MESSAGE = 'INFA';
+		SET outputReqFields.DE_ERROR_TO_TERM_SW = 'N';
+		SET outputReqFields.DE_ORIGINATOR = 'IIB';
+
+		CREATE FIELD outputRef.{'DE_ACT_HLD_KEY_AREA'};
+		DECLARE outputReqFields_KEY_AREA REFERENCE TO outputRef.{'DE_ACT_HLD_KEY_AREA'};
+		SET outputReqFields_KEY_AREA.DE_ACT_HLD_FIRM_NO = CAST(Environment.Variables.FederateUserResponse.ent:FederateUserOutput.ent:FirmNo AS INTEGER);
+		SET outputReqFields_KEY_AREA.DE_ACT_HLD_ACCT_NO = CAST(InputRoot.JSON.Data.getAccountPortfolioStatementParametersRequest.accountNumber AS CHARACTER);
+
+		CREATE FIELD outputRef.{'DE_ACT_STM_KEY_AREA'};
+		DECLARE outputReqFields_STM_KEY_AREA REFERENCE TO outputRef.{'DE_ACT_STM_KEY_AREA'};
+		--To handle use cases when user SubId is not sent.
+		SET outputReqFields_STM_KEY_AREA.DE_ACT_STM_FIRM_NO = CAST(Environment.Variables.FederateUserResponse.ent:FederateUserOutput.ent:FirmNo AS INTEGER);
+		SET outputReqFields_STM_KEY_AREA.DE_ACT_STM_ACCT_NO = CAST (InputRoot.JSON.Data.getAccountPortfolioStatementParametersRequest.accountNumber AS CHARACTER);
+		PROPAGATE TO TERMINAL 'out';
+
+		
+		DECLARE Return_Code CHARACTER Environment.Variables.FirstCalRes.DE_RETURN_CODE_TABLE.DE_RETURN_CODES.DE_RETURN_CODE; 
+	
+		-- For second time CICS call 		
+		IF Return_Code = '0' OR  NULL THEN  
+			-- Saving 1st call DFDL data into Env
+			--SET Environment.Variables.DFDL = InputRoot.DFDL.WEBDE20050PARAMETERS ;
+			-- setting IdentityMap properties
+			SET OutputLocalEnvironment = InputLocalEnvironment;
+			SET OutputRoot.Properties.IdentityMappedType = 'usernameAndPassword';
+			SET OutputRoot.Properties.IdentityMappedToken = Environment.Variables.TRConfig.Context.CICSUserId;
+			SET OutputRoot.Properties.IdentityMappedPassword = '  ';		
+
+
+			SET Environment.Variables.TRConfig.Context.CICSUserId = InputLocalEnvironment.Variables.TRConfig.Context.CICSUserId;
+			SET Environment.Variables.TRConfig.Context.TransactionId = InputLocalEnvironment.Variables.TRConfig.Context.TransactionId;
+			-- 2nd call mapping
+			CREATE LASTCHILD OF OutputRoot DOMAIN ('DFDL') NAME 'DFDL';
+			CREATE FIELD OutputRoot.DFDL.{'WEBDE20050PARAMETERS'};
+			DECLARE outputRef REFERENCE TO OutputRoot.DFDL.{'WEBDE20050PARAMETERS'};
+
+			SET outputRef.DE_COMM_AREA.DE_FIRM = CAST(Environment.Variables.FederateUserResponse.ent:FederateUserOutput.ent:FirmNo AS INTEGER);
+			SET outputRef.DE_COMM_AREA.DE_SUB = CAST(Environment.Variables.FederateUserResponse.ent:FederateUserOutput.ent:SubNo AS INTEGER);
+
+			SET outputRef.DE_COMM_AREA.DE_REQ.DE_APPLICATION = 'HAPI';
+			SET outputRef.DE_COMM_AREA.DE_REQ.DE_FUNCTION = 'INQ';		 
+
+
+			SET outputRef.DE_COMM_AREA.DE_USER_INFO.DE_SECURITY_LEVEL = '02';
+			SET outputRef.DE_COMM_AREA.DE_MESSAGE = 'INPA';
+			SET outputRef.DE_COMM_AREA.DE_ERROR_TO_TERM_SW = 'N';
+			SET outputRef.DE_COMM_AREA.DE_ORIGINATOR = 'IIB';		 
+
+
+			SET outputRef.DE_ACT_HLD_KEY_AREA.DE_ACT_HLD_FIRM_NO = CAST(Environment.Variables.FederateUserResponse.ent:FederateUserOutput.ent:FirmNo AS INTEGER);
+			SET outputRef.DE_ACT_HLD_KEY_AREA.DE_ACT_HLD_ACCT_NO = CAST(InputRoot.JSON.Data.getAccountPortfolioStatementParametersRequest.accountNumber AS CHARACTER);
+
+			SET outputRef.DE_ACT_STM_KEY_AREA.DE_ACT_STM_FIRM_NO = CAST(Environment.Variables.FederateUserResponse.ent:FederateUserOutput.ent:FirmNo AS INTEGER);
+			SET outputRef.DE_ACT_STM_KEY_AREA.DE_ACT_STM_ACCT_NO = CAST (InputRoot.JSON.Data.getAccountPortfolioStatementParametersRequest.accountNumber AS CHARACTER) ;
+			PROPAGATE TO TERMINAL 'out1';
+		ELSE 
+			
+		END IF;		
+		RETURN FALSE; 
+
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+		SET OutputRoot = InputRoot;
+	END;
+END MODULE;

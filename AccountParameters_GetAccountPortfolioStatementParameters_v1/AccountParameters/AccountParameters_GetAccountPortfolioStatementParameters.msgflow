@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:AccountParameters_GetAccountPortfolioStatementParameters.subflow="AccountParameters/GetAccountPortfolioStatementParameters.subflow" xmlns:ComIbmCompute.msgnode="ComIbmCompute.msgnode" xmlns:ComIbmWSInput.msgnode="ComIbmWSInput.msgnode" xmlns:ComIbmWSReply.msgnode="ComIbmWSReply.msgnode" xmlns:com_financialandrisk_BuildServiceConfig.subflow="com/financialandrisk/BuildServiceConfig.subflow" xmlns:com_financialandrisk_errorhandler_CommonWebServiceErrorHandler.subflow="com/financialandrisk/errorhandler/CommonWebServiceErrorHandler.subflow"
+    xmlns:com_financialandrisk_messageutils_TransformMessages.subflow="com/financialandrisk/messageutils/TransformMessages.subflow" xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" xmlns:eflow="http://www.ibm.com/wbi/2005/eflow" xmlns:utility="http://www.ibm.com/wbi/2005/eflow_utility" nsURI="AccountParameters/AccountParameters_GetAccountPortfolioStatementParameters.msgflow" nsPrefix="AccountParameters_AccountParameters_GetAccountPortfolioStatementParameters.msgflow">
+  <eClassifiers xmi:type="eflow:FCMComposite" name="FCMComposite_1">
+    <eSuperTypes href="http://www.ibm.com/wbi/2005/eflow#//FCMBlock"/>
+    <eStructuralFeatures xmi:type="ecore:EAttribute" xmi:id="Property.CICSTransactionId" name="CICSTransactionId" lowerBound="1" defaultValueLiteral="@300">
+      <eType xmi:type="ecore:EDataType" href="http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    </eStructuralFeatures>
+    <translation xmi:type="utility:TranslatableString" key="AccountParameters_GetAccountPortfolioStatementParameters" bundleName="AccountParameters/AccountParameters_GetAccountPortfolioStatementParameters" pluginId="AccountParameters_GetAccountPortfolioStatementParameters_v1"/>
+    <colorGraphic16 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/AccountParameters_GetAccountPortfolioStatementParameters_v1/icons/full/obj16/AccountParameters_GetAccountPortfolioStatementParameters.gif"/>
+    <colorGraphic32 xmi:type="utility:GIFFileGraphic" resourceName="platform:/plugin/AccountParameters_GetAccountPortfolioStatementParameters_v1/icons/full/obj30/AccountParameters_GetAccountPortfolioStatementParameters.gif"/>
+    <composition>
+      <nodes xmi:type="ComIbmWSInput.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_1" location="-35,137" URLSpecifier="/v1/AccountParameters/GetAccountPortfolioStatementParameters" useHTTPS="true" parseQueryString="true" messageDomainProperty="JSON" validateTiming="immediate" validateMaster="contentAndValue">
+        <translation xmi:type="utility:ConstantString" string="GetAccountPortfolioStatementParametersInput"/>
+      </nodes>
+      <nodes xmi:type="ComIbmCompute.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_2" location="183,270" computeExpression="esql://routine/AccountParameters#GetAccountPortfolioStatementParameters_Validation.Main">
+        <translation xmi:type="utility:ConstantString" string="Validation"/>
+      </nodes>
+      <nodes xmi:type="com_financialandrisk_errorhandler_CommonWebServiceErrorHandler.subflow:FCMComposite_1" xmi:id="FCMComposite_1_3" location="303,48">
+        <translation xmi:type="utility:ConstantString" string="CommonWebServiceErrorHandler"/>
+      </nodes>
+      <nodes xmi:type="com_financialandrisk_BuildServiceConfig.subflow:FCMComposite_1" xmi:id="FCMComposite_1_4" location="329,243">
+        <translation xmi:type="utility:ConstantString" string="BuildServiceConfig"/>
+      </nodes>
+      <nodes xmi:type="com_financialandrisk_messageutils_TransformMessages.subflow:FCMComposite_1" xmi:id="FCMComposite_1_5" location="674,103">
+        <translation xmi:type="utility:ConstantString" string="TransformMessages"/>
+      </nodes>
+      <nodes xmi:type="ComIbmWSReply.msgnode:FCMComposite_1" xmi:id="FCMComposite_1_7" location="673,162" validateMaster="none">
+        <translation xmi:type="utility:ConstantString" string="GetAccountPortfolioStatementParametersOutput"/>
+      </nodes>
+      <nodes xmi:type="AccountParameters_GetAccountPortfolioStatementParameters.subflow:FCMComposite_1" xmi:id="FCMComposite_1_8" location="422,231">
+        <translation xmi:type="utility:ConstantString" string="GetAccountPortfolioStatementParameters"/>
+      </nodes>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_1" targetNode="FCMComposite_1_2" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_2" targetNode="FCMComposite_1_3" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.failure" targetTerminalName="InTerminal.Input"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_3" targetNode="FCMComposite_1_3" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.timeout" targetTerminalName="InTerminal.Input"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_4" targetNode="FCMComposite_1_3" sourceNode="FCMComposite_1_1" sourceTerminalName="OutTerminal.catch" targetTerminalName="InTerminal.Input"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_5" targetNode="FCMComposite_1_4" sourceNode="FCMComposite_1_2" sourceTerminalName="OutTerminal.out" targetTerminalName="InTerminal.Input1"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_6" targetNode="FCMComposite_1_5" sourceNode="FCMComposite_1_3" sourceTerminalName="OutTerminal.Output" targetTerminalName="InTerminal.Input"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_9" targetNode="FCMComposite_1_5" sourceNode="FCMComposite_1_2" sourceTerminalName="OutTerminal.out1" targetTerminalName="InTerminal.Input"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_10" targetNode="FCMComposite_1_7" sourceNode="FCMComposite_1_5" sourceTerminalName="OutTerminal.Output" targetTerminalName="InTerminal.in"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_7" targetNode="FCMComposite_1_8" sourceNode="FCMComposite_1_4" sourceTerminalName="OutTerminal.Output" targetTerminalName="InTerminal.Input"/>
+      <connections xmi:type="eflow:FCMConnection" xmi:id="FCMConnection_11" targetNode="FCMComposite_1_5" sourceNode="FCMComposite_1_8" sourceTerminalName="OutTerminal.Output" targetTerminalName="InTerminal.Input"/>
+    </composition>
+    <propertyOrganizer>
+      <propertyDescriptor groupName="Group.Basic" configurable="true" userDefined="true" describedAttribute="Property.CICSTransactionId">
+        <propertyName xmi:type="utility:TranslatableString" key="Property.CICSTransactionId" bundleName="AccountParameters/AccountParameters_GetAccountPortfolioStatementParameters" pluginId="AccountParameters_GetAccountPortfolioStatementParameters_v1"/>
+      </propertyDescriptor>
+    </propertyOrganizer>
+    <stickyBoard/>
+  </eClassifiers>
+</ecore:EPackage>

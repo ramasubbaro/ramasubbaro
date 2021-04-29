@@ -1,0 +1,29 @@
+
+
+BROKER SCHEMA AccountParameters
+PATH com.financialandrisk;
+
+CREATE COMPUTE MODULE GetAccountPortfolioStatementParameters_Validation
+	DECLARE CICSTransactionId EXTERNAL CHARACTER;
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+
+		CALL CopyEntireMessage();
+		SET Environment.Variables.JSON = InputRoot.JSON;
+		DECLARE requestorIdentityType REFERENCE TO InputRoot.JSON.Data.requestHeader.requestor.identityType;
+
+		SET OutputLocalEnvironment = InputLocalEnvironment;
+		-- Assign CICS TransactionId from User Defined Property
+		SET Environment.Variables.CICSTransactionId = CICSTransactionId;
+		-- Validate and Store standard inptus - InputRoot, Environment, InputLocalEnvironment
+		CALL ValidateAndStoreStandardInputs(InputRoot, Environment, InputLocalEnvironment);
+
+		RETURN TRUE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+		SET OutputRoot = InputRoot;
+	END;
+
+
+END MODULE;

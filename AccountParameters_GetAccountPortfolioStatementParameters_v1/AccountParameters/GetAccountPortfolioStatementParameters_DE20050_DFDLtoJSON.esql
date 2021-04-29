@@ -1,0 +1,140 @@
+
+
+BROKER SCHEMA AccountParameters
+PATH com.financialandrisk.messageutils;
+
+CREATE COMPUTE MODULE GetAccountPortfolioStatementParameters_DE20050_DFDLtoJSON
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		-- CALL CopyMessageHeaders();
+		-- CALL CopyEntireMessage();
+		SET OutputRoot.Properties = Environment.Variables.Properties;
+		--SET OutputRoot.Properties.ContentType = 'application/json';
+
+		CREATE LASTCHILD OF OutputRoot DOMAIN 'JSON';
+		-- CREATE LASTCHILD OF OutputRoot.JSON.Data NAME 'responseHeader';
+		-- --SProc call For form Response Header
+		-- CALL CreateAndInitResponseHeader(InputRoot, OutputRoot, Environment, 'SUCCESS', TRUE);
+		-- For Form Body
+		CREATE FIELD OutputRoot.JSON.Data.getAccountPortfolioStatementParametersResponse;
+		DECLARE outref REFERENCE TO OutputRoot.JSON.Data.getAccountPortfolioStatementParametersResponse;
+		DECLARE inref REFERENCE TO InputRoot.DFDL.WEBDE20050PARAMETERS;
+		SET outref.repCode = inref.DE_HAPI_COMMON_AREA.DE_HAPI_ACCT_INFO.DE_HAPI_REP;
+		SET outref.branchCode = inref.DE_HAPI_COMMON_AREA.DE_HAPI_ACCT_INFO.DE_HAPI_BRANCH;
+		SET outref.primaryAccountNumber = inref.DE_HAPI_COMMON_AREA.DE_HAPI_MISC_INFO.DE_HAPI_PARENT_ACCT;
+		SET outref.accountTransferRepCode = inref.DE_HAPI_COMMON_AREA.DE_HAPI_ACCT_INFO.DE_HAPI_REP_B4_ACATS;
+		SET outref.receiveCostBasisStatement = inref.DE_STM_COD_LAYOUT.DE_STM_COD_COST_BASIS_SW;
+		CREATE FIELD outref.lastStatementDate;
+		IF (inref.DE_HAPI_COMMON_AREA.DE_HAPI_ACCT_INFO.DE_HAPI_LST_STM_MMYY <> '0' OR NULL) THEN
+			SET outref.lastStatementDate.month = inref.DE_HAPI_COMMON_AREA.DE_HAPI_ACCT_INFO.DE_HAPI_LST_STM_MMYY;
+		ELSE
+			SET outref.lastStatementDate.month = lastStatementDate(SUBSTRING(inref.DE_HAPI_COMMON_AREA.DE_HAPI_ACCT_INFO.DE_HAPI_LST_STM_MMYY FROM 2 FOR 2)) ;
+		END IF;
+		IF (inref.DE_HAPI_COMMON_AREA.DE_HAPI_ACCT_INFO.DE_HAPI_LST_STM_MMYY <> '0' OR NULL)THEN
+			SET outref.lastStatementDate.year = inref.DE_HAPI_COMMON_AREA.DE_HAPI_ACCT_INFO.DE_HAPI_LST_STM_MMYY;
+		ELSE
+			SET outref.lastStatementDate.year = SUBSTRING(inref.DE_HAPI_COMMON_AREA.DE_HAPI_ACCT_INFO.DE_HAPI_LST_STM_MMYY FROM 4 FOR 2);
+		END IF;
+		CREATE FIELD outref.accountStatementInformation;
+		DECLARE outref_AccStmtInfo REFERENCE TO outref.accountStatementInformation;
+		SET outref_AccStmtInfo.statementCode = inref.DE_ACT_STM_LAYOUT.DE_ACT_STM_STMT_CODE;
+		SET outref_AccStmtInfo.statementDistributionType = COALESCE(StatementDistributionType(inref.DE_ACT_STM_LAYOUT.DE_ACT_STM_DIST_METHOD_IND),'');
+		SET outref_AccStmtInfo.statementInstructions = COALESCE(StatementInstructions(inref.DE_ACT_STM_LAYOUT.DE_ACT_STM_MMF_SUPPRESS_IND),'');
+		SET outref_AccStmtInfo.sendDuplicateStatements = inref.DE_HAPI_COMMON_AREA.DE_HAPI_ACCT_INFO.DE_HAPI_NASPHDLG;
+		SET outref_AccStmtInfo.additionalStatementCopies = ''; --inref; --Need's to check
+		SET outref_AccStmtInfo.suppressRepStatementCopy = inref.DE_ACT_STM_LAYOUT.DE_ACT_STM_REP_COPY_IND;
+		SET outref_AccStmtInfo.taxLotNettingMethod = COALESCE(taxLotNettingMethod(inref.DE_ACT_STM_LAYOUT.DE_ACT_STM_TAX_LOTS_IND),'');
+		SET outref_AccStmtInfo.includeHeldAwayAssets = inref.DE_ACT_STM_LAYOUT.DE_ACT_STM_OFF_PREMISE_IND;
+		SET outref_AccStmtInfo.includeRealizedGainLoss = COALESCE(includeRealizedGainLoss(inref.DE_ACT_STM_LAYOUT.DE_ACT_STM_REALIZED_IND),'');
+		SET outref_AccStmtInfo.openTaxLotApplyPaydown = inref.DE_ACT_STM_LAYOUT.DE_ACT_STM_APLY_PYDWN_OPN_IND;
+		SET outref_AccStmtInfo.closedTaxLotApplyPaydown = inref.DE_ACT_STM_LAYOUT.DE_ACT_STM_APLY_PYDWN_CLS_IND;
+		SET outref_AccStmtInfo.suppressGainLoss = inref.DE_ACT_STM_LAYOUT.DE_ACT_STM_GORL_OVERRIDE_IND;
+
+		CREATE FIELD outref_AccStmtInfo.auditTrail;
+		SET outref_AccStmtInfo.auditTrail.securityMasterUpdatedBy = inref.DE_ACT_HLD_LAYOUT.DE_ACT_HLD_CHANGE_WHO_CODE;
+		SET outref_AccStmtInfo.auditTrail.securityUserRecordUpdateDate = inref.DE_ACT_HLD_LAYOUT.DE_ACT_HLD_CHANGE_TIMESTAMP;
+
+
+		CREATE FIELD outref.processingStatementInformation;
+		DECLARE outref_procesStmtInfo REFERENCE TO outref.processingStatementInformation;
+		SET outref_procesStmtInfo.statementCode = inref.DE_ACT_STM_LAYOUT.DE_ACT_STM_STMT_CODE;
+		SET outref_procesStmtInfo.suppressRepStatementCopy = inref.DE_ACT_STM_LAYOUT.DE_ACT_STM_REP_COPY_IND;
+		SET outref_procesStmtInfo.taxLotNettingMethod = inref.DE_ACT_STM_LAYOUT.DE_ACT_STM_TAX_LOTS_IND;
+		SET outref_procesStmtInfo.includeHeldAwayAssets = inref.DE_ACT_STM_LAYOUT.DE_ACT_STM_OFF_PREMISE_IND;
+		SET outref_procesStmtInfo.includeRealizedGainLoss = inref.DE_ACT_STM_LAYOUT.DE_ACT_STM_REALIZED_IND;
+		SET outref_procesStmtInfo.openTaxLotApplyPaydown = inref.DE_ACT_STM_LAYOUT.DE_ACT_STM_APLY_PYDWN_OPN_IND;
+		SET outref_procesStmtInfo.closedTaxLotApplyPaydown = inref.DE_ACT_STM_LAYOUT.DE_ACT_STM_APLY_PYDWN_CLS_IND;
+		SET outref_procesStmtInfo.suppressGainLoss = inref.DE_ACT_STM_LAYOUT.DE_ACT_STM_GORL_OVERRIDE_IND;
+		SET outref_procesStmtInfo.suppressDVPStatement = inref.DE_ACT_STM_LAYOUT.DE_ACT_STM_DVP_IND;
+
+		CREATE FIELD outref.accountTaxLotInformation;
+		DECLARE outref_AccTaxInfo REFERENCE TO outref.accountTaxLotInformation;
+		SET outref_AccTaxInfo.conversionDate = ''; -- inref; --Need's to check
+		SET outref_AccTaxInfo.accountingMethod = COALESCE(accountingMethod(inref.DE_ACT_HLD_LAYOUT.DE_ACT_HLD_ACCT_METHOD_CODE),'');
+		SET outref_AccTaxInfo.includeAccountforProcessing = inref.DE_ACT_HLD_LAYOUT.DE_ACT_HLD_PROCESSING_5B_IND;
+		SET outref_AccTaxInfo.openTaxLotApplyPaydown = inref.DE_ACT_STM_LAYOUT.DE_ACT_STM_APLY_PYDWN_OPN_IND;
+		SET outref_AccTaxInfo.closedTaxLotApplyPaydown = inref.DE_ACT_STM_LAYOUT.DE_ACT_STM_APLY_PYDWN_CLS_IND;
+		SET outref_AccTaxInfo.suppressGainLoss = inref.DE_ACT_STM_LAYOUT.DE_ACT_STM_GORL_OVERRIDE_IND;
+
+		CREATE FIELD outref_AccTaxInfo.auditTrail;
+		SET outref_AccTaxInfo.auditTrail.securityMasterUpdatedBy = inref.DE_ACT_HLD_LAYOUT.DE_ACT_HLD_CHANGE_WHO_CODE;
+		SET outref_AccTaxInfo.auditTrail.securityUserRecordUpdateDate = inref.DE_ACT_HLD_LAYOUT.DE_ACT_HLD_CHANGE_TIMESTAMP;
+
+		CREATE FIELD outref.ProcessingTaxLotInformation;
+		DECLARE outref_ProcessTaxInfo REFERENCE TO outref.ProcessingTaxLotInformation;
+		SET outref_ProcessTaxInfo.accountingMethod = COALESCE(accountingMethod(inref.DE_ACT_HLD_LAYOUT.DE_ACT_HLD_ACCT_METHOD_CODE),'');
+		SET outref_ProcessTaxInfo.includeAccountforProcessing = inref.DE_ACT_HLD_LAYOUT.DE_ACT_HLD_PROCESSING_5B_IND;
+		SET outref_ProcessTaxInfo.openTaxLotApplyPaydown = inref.DE_ACT_STM_LAYOUT.DE_ACT_STM_APLY_PYDWN_OPN_IND;
+		SET outref_ProcessTaxInfo.closedTaxLotApplyPaydown = inref.DE_ACT_STM_LAYOUT.DE_ACT_STM_APLY_PYDWN_CLS_IND;
+	 
+	 	/* Second call Response mapping */
+	
+		--CREATE LASTCHILD OF OutputRoot DOMAIN 'JSON';
+		--CREATE FIELD OutputRoot.JSON.Data.getAccountPortfolioStatementParametersResponse;
+		--DECLARE outref REFERENCE TO OutputRoot.JSON.Data.getAccountPortfolioStatementParametersResponse;
+		--DECLARE inref REFERENCE TO InputRoot.DFDL.WEBDE20050PARAMETERS;
+		CREATE FIELD outref.processingStatementInformation; 
+		SET outref.processingStatementInformation.statementCode = inref.DE_ACT_STM_LAYOUT.DE_ACT_STM_STMT_CODE;
+		SET outref.processingStatementInformation.suppressRepStatementCopy = inref.DE_ACT_STM_LAYOUT.DE_ACT_STM_REP_COPY_IND;
+		SET outref.processingStatementInformation.taxLotNettingMethod = inref.DE_ACT_STM_LAYOUT.DE_ACT_STM_TAX_LOTS_IND;
+		SET outref.processingStatementInformation.includeRealizedGainLoss = inref.DE_ACT_STM_LAYOUT.DE_ACT_STM_REALIZED_IND;
+		SET outref.processingStatementInformation.openTaxLotApplyPaydown = inref.DE_ACT_STM_LAYOUT.DE_ACT_STM_APLY_PYDWN_OPN_IND;
+		SET outref.processingStatementInformation.closedTaxLotApplyPaydown = inref.DE_ACT_STM_LAYOUT.DE_ACT_STM_APLY_PYDWN_CLS_IND;
+		SET outref.processingStatementInformation.suppressGainLoss = inref.DE_ACT_STM_LAYOUT.DE_ACT_STM_GORL_OVERRIDE_IND;
+		SET outref.processingStatementInformation.suppressDVPStatement = inref.DE_ACT_STM_LAYOUT.DE_ACT_STM_DVP_IND;
+
+		CREATE FIELD outref.accountTaxLotInformation;
+		SET outref.accountTaxLotInformation.conversionDate = '';
+		SET outref.accountTaxLotInformation.suppressGainLoss = '';
+		SET outref.accountTaxLotInformation.accountingMethod = inref.DE_ACT_HLD_LAYOUT.DE_ACT_HLD_ACCT_METHOD_CODE;
+		SET outref.accountTaxLotInformation.includeAccountForProcessing = inref.DE_ACT_HLD_LAYOUT.DE_ACT_HLD_PROCESSING_5B_IND;
+		SET outref.accountTaxLotInformation.openTaxLotApplyPaydown = inref.DE_ACT_HLD_LAYOUT.DE_ACT_HLD_APLY_PYDWN_OPN_IND;
+		SET outref.accountTaxLotInformation.closedTaxLotApplyPaydown = inref.DE_ACT_HLD_LAYOUT.DE_ACT_HLD_APLY_PYDWN_CLS_IND;
+		CREATE FIELD outref.accountTaxLotInformation.AuditTrail;
+		SET outref.accountTaxLotInformation.AuditTrail.ChangedDate = inref.DE_ACT_HLD_LAYOUT.DE_ACT_HLD_CHANGE_TIMESTAMP;
+		SET outref.accountTaxLotInformation.AuditTrail.ChangedBy = inref.DE_ACT_HLD_LAYOUT.DE_ACT_HLD_CHANGE_WHO_CODE; 
+
+
+		CREATE FIELD outref.processingTaxLotInformation;
+
+		SET outref.processingTaxLotInformation.accountingMethod = inref.DE_ACT_HLD_LAYOUT.DE_ACT_HLD_ACCT_METHOD_CODE;
+		SET outref.processingTaxLotInformation.includeAccountForProcessing = inref.DE_ACT_HLD_LAYOUT.DE_ACT_HLD_PROCESSING_5B_IND;
+		SET outref.processingTaxLotInformation.openTaxLotApplyPaydown = inref.DE_ACT_HLD_LAYOUT.DE_ACT_HLD_APLY_PYDWN_OPN_IND;
+		SET outref.processingTaxLotInformation.closedTaxLotApplyPaydown = inref.DE_ACT_HLD_LAYOUT.DE_ACT_HLD_APLY_PYDWN_OPN_IND;
+		RETURN TRUE;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;
+
+	CREATE PROCEDURE CopyEntireMessage() BEGIN
+		SET OutputRoot = InputRoot;
+	END;
+END MODULE;

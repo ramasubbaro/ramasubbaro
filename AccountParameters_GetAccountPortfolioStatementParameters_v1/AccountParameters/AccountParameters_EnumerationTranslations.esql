@@ -1,0 +1,101 @@
+BROKER SCHEMA AccountParameters
+
+CREATE PROCEDURE StatementDistributionType(IN stmtDistributionType CHARACTER)
+RETURNS CHARACTER
+BEGIN
+	CASE stmtDistributionType 
+	WHEN 'P' THEN
+		RETURN 'Paper';
+	WHEN 'E' THEN
+		RETURN 'Electronic';
+	WHEN 'B' THEN
+		RETURN 'PaperAndElectronic';
+	END CASE;
+END;
+
+CREATE PROCEDURE StatementInstructions(IN StmtInstructions CHARACTER)
+RETURNS CHARACTER    
+BEGIN 
+	CASE StmtInstructions		
+	WHEN ''  THEN
+		RETURN 'DefaultFirmParameters';
+	WHEN 'A' THEN 
+		RETURN 'SuppressStatements';
+	WHEN 'F' THEN
+		RETURN 'StatementsAlwaysPrinted';
+	WHEN 'N' THEN
+		RETURN 'NonQuarterlyStatementsAlwaysPrinted'; 	 		
+	END CASE;
+END;
+
+CREATE PROCEDURE taxLotNettingMethod (IN taxLotMethod CHARACTER)
+RETURNS CHARACTER 
+BEGIN
+	CASE taxLotMethod 		
+	WHEN 'N' THEN
+		RETURN 'NettedWithBlendedCost';
+	WHEN 'X' THEN
+		RETURN 'NettedWithoutBlendedCost';
+	WHEN 'Y' THEN
+		RETURN 'BroadWithoutBlendedCost';		
+	END CASE;
+END;
+
+CREATE PROCEDURE includeRealizedGainLoss (IN includeRlzeGainLoss CHARACTER) 
+RETURNS CHARACTER 
+BEGIN
+	CASE includeRlzeGainLoss 		
+	WHEN 'M' THEN
+		RETURN 'Included';
+	WHEN 'N' THEN
+		RETURN 'NotIncluded';
+	WHEN 'Y' THEN
+		RETURN 'YTDIncluded'; 	
+	END CASE; 
+END;
+
+ 
+ CREATE PROCEDURE accountingMethod (IN accMethod CHARACTER) 
+RETURNS CHARACTER 
+BEGIN
+	CASE accMethod 		
+	WHEN 'F' THEN
+		RETURN 'FirstInFirstOut';
+	WHEN 'H' THEN
+		RETURN 'HighestCost';	
+	END CASE; 
+END;
+
+CREATE PROCEDURE lastStatementDate (IN lastStatementDate_month DECIMAL) 
+RETURNS CHARACTER
+BEGIN
+    CASE lastStatementDate_month 
+      	WHEN 01 THEN
+       		RETURN 'January';
+       	WHEN 02 THEN
+       		RETURN 'February';
+       	WHEN 03 THEN
+       		RETURN 'March';
+       	WHEN 04 THEN
+       		RETURN 'April';
+       	WHEN 05 THEN
+       		RETURN 'May';
+       	WHEN 06 THEN
+       		RETURN 'June';
+       	WHEN 07 THEN
+       		RETURN 'July';
+       	WHEN 08 THEN
+       		RETURN 'August';
+       	WHEN 09 THEN
+       		RETURN 'September';
+       	WHEN 10 THEN
+       		RETURN 'October';
+       	WHEN 11 THEN
+       		RETURN 'November';
+       	WHEN 12 THEN
+       		RETURN 'December';
+       	ELSE
+        	RETURN NULL;
+       END CASE;	
+END;	
+	

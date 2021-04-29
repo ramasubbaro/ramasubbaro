@@ -1,0 +1,17 @@
+
+
+BROKER SCHEMA AccountParameters
+PATH com.financialandrisk.string;
+
+CREATE FILTER MODULE GetAccountPortfolioStatementParameters_CheckForSubId
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		IF ((Environment.Variables.JSON.Data.requestHeader.requestor.identityType = 'SubId') AND NOT IsNullOrEmpty(Environment.Variables.JSON.Data.requestHeader.requestor.identity)) THEN
+			RETURN FALSE;
+		ELSE
+			RETURN TRUE;
+		END IF ;
+
+	END;
+
+END MODULE;

@@ -1,0 +1,32 @@
+BROKER SCHEMA AccountParameters
+
+
+CREATE FILTER MODULE InquiryUsingDE20050_Filter
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		SET Environment.Variables.FirstCalRes = Root.DFDL.WEBDE20050PARAMETERS;
+		DECLARE appCode CHARACTER ;
+		DECLARE returnCodeRef REFERENCE TO  Root.DFDL.WEBDE20050PARAMETERS.DE_RETURN_CODE_TABLE.DE_RETURN_CODES ;
+		DECLARE appReturnCode CHARACTER returnCodeRef.DE_RETURN_CODE; 
+		DECLARE I INT 1;
+		IF LASTMOVE (returnCodeRef) THEN
+			MOVE returnCodeRef FIRSTCHILD;
+			WHILE (LASTMOVE (returnCodeRef) ) DO
+				
+				-- Setting appCode as  'HAPI' 								
+					SET appCode = 'HAPI';
+			
+				SET Environment.Variables.MsgtInputs.MsgtInput[I].appReturnCode = appReturnCode;
+				SET Environment.Variables.MsgtInputs.MsgtInput[I].appCode = appCode; 
+				SET Environment.Variables.MsgtInputs.MsgtInput[I].hostErrorSeverity = returnCodeRef.DE_RETURN_MSG_IND;
+--				SET Environment.Variables.MsgtInputs.MsgtInput[I].isHeaderMessage =  TRUE;
+				SET I = I + 1;
+				MOVE returnCodeRef NEXTSIBLING;
+			END WHILE;		
+			RETURN TRUE;
+		ELSE 
+			RETURN FALSE; 
+			END IF;	
+	END;
+
+END MODULE;

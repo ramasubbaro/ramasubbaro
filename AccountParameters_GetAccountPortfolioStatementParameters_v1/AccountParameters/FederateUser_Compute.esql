@@ -1,0 +1,66 @@
+BROKER SCHEMA AccountParameters
+
+
+
+DECLARE ent NAMESPACE 'https://services.wealth.thomsonreuters.com/common/entities/v1';
+
+CREATE COMPUTE MODULE FederateUser_SaveInputRoot
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		CALL CopyMessageHeaders();
+		SET Environment.Variables.TRConfig  = InputLocalEnvironment.Variables.TRConfig;		
+
+--		Save Message to Restore Post-UserFederation
+	    SET Environment.Variables.InputRoot = InputRoot;
+	    SET Environment.Variables.InputRoot.JSON.Data.requestHeader.requestor.identity = TRIM(InputRoot.JSON.Data.requestHeader.requestor.identity );
+
+-- 		Assign inputs for Callable_FederateUser_v3
+		SET OutputLocalEnvironment.Variables.ExternalReferenceId   = InputLocalEnvironment.Variables.TRConfig.Header.requestHeader.externalReferenceId;
+		SET OutputRoot.XMLNSC.ent:FederateUserRequest.ent:FederateUserInput.ent:AlternateId 
+		                                                           = TRIM(InputLocalEnvironment.Variables.TRConfig.Header.requestHeader.requestor.identity);
+		SET OutputLocalEnvironment.Variables.TRConfig.Context      = InputLocalEnvironment.Variables.TRConfig.Context;
+-- 		It is optional to pass in the ApplicatonCode.  ApplicationCode is used to determine SecurityLevel.  (Examples: 'TAXL', 'RCHK')
+		SET OutputRoot.XMLNSC.ent:FederateUserRequest.ent:FederateUserInput.ent:ApplicationCode = 'SHIP';
+
+		RETURN TRUE;
+	END;
+
+	CREATE PROCEDURE CopyMessageHeaders() BEGIN
+		DECLARE I INTEGER 1;
+		DECLARE J INTEGER;
+		SET J = CARDINALITY(InputRoot.*[]);
+		WHILE I < J DO
+			SET OutputRoot.*[I] = InputRoot.*[I];
+			SET I = I + 1;
+		END WHILE;
+	END;	
+END MODULE;
+
+
+
+CREATE COMPUTE MODULE FederateUser_CheckUserFederationResult
+	CREATE FUNCTION Main() RETURNS BOOLEAN
+	BEGIN
+		IF EXISTS(InputRoot.SOAP.Body.*:Fault[]) OR
+		   LENGTH(InputRoot.XMLNSC.ent:FederateUserResponse.ent:FederateUserOutput.ent:Message.ent:Code) > 0 THEN
+			SET OutputRoot = NULL;
+			SET OutputRoot.HTTPResponseHeader          = Environment.Variables.InputRoot.HTTPInputHeader;
+
+	    	DELETE FIELD Environment.Variables.InputRoot;
+
+--          Track Error Message - FederateUser Failure  		
+			DECLARE operationName REFERENCE TO InputLocalEnvironment.Variables.TRConfig.Context.OperationName;
+			CALL com.financialandrisk.TrackSourceMessageForUtilities(Environment, 'IIB', operationName, 'WWS0933', 'User Federation Failure', 'ERROR');
+			PROPAGATE TO TERMINAL 'out1' FINALIZE NONE DELETE NONE;
+			RETURN FALSE;
+		ELSE
+--			Restore Saved Message
+	    	SET OutputRoot =  Environment.Variables.InputRoot;				
+	    	DELETE FIELD Environment.Variables.InputRoot;
+--			Save FederateUser Response Fields
+			SET Environment.Variables.FederateUserResponse = InputRoot.XMLNSC.ent:FederateUserResponse;
+			
+			RETURN TRUE;
+		END IF;
+	END;
+END MODULE;
